@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Daily goals</h1>
+    <p class="page-subtitle">
+      Set or adjust your daily calorie and macro targets. These goals power the progress bars on your dashboard.
+    </p>
+  </div>
+  <div class="page-header-actions">
+    <a href="/dashboard" class="btn-secondary">← Back to dashboard</a>
+  </div>
+</div>
+
+<div class="page-section goals-layout">
+  <!-- Goals form -->
+  <section class="card goals-card">
+    <div class="card-header">
+      <h2>Update goals</h2>
+      {% if has_goal %}
+        <span class="chip chip-success">Goals active</span>
+      {% else %}
+        <span class="chip chip-muted">No goals set</span>
+      {% endif %}
+    </div>
+
+    <form method="post" action="/goals" class="form-grid">
+      <div class="form-field">
+        <label for="daily_calories">Daily calories (kcal)</label>
+        <input
+          id="daily_calories"
+          name="daily_calories"
+          type="number"
+          step="1"
+          min="0"
+          placeholder="e.g. 2000"
+          value="{{ goal.daily_calories if goal and goal.daily_calories is not none else '' }}"
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="daily_protein_g">Daily protein (g)</label>
+        <input
+          id="daily_protein_g"
+          name="daily_protein_g"
+          type="number"
+          step="0.1"
+          min="0"
+          placeholder="e.g. 120"
+          value="{{ goal.daily_protein_g if goal and goal.daily_protein_g is not none else '' }}"
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="daily_carbs_g">Daily carbs (g)</label>
+        <input
+          id="daily_carbs_g"
+          name="daily_carbs_g"
+          type="number"
+          step="0.1"
+          min="0"
+          placeholder="e.g. 220"
+          value="{{ goal.daily_carbs_g if goal and goal.daily_carbs_g is not none else '' }}"
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="daily_fat_g">Daily fat (g)</label>
+        <input
+          id="daily_fat_g"
+          name="daily_fat_g"
+          type="number"
+          step="0.1"
+          min="0"
+          placeholder="e.g. 60"
+          value="{{ goal.daily_fat_g if goal and goal.daily_fat_g is not none else '' }}"
+        >
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">
+          {% if has_goal %}Update goals{% else %}Save goals{% endif %}
+        </button>
+
+        {% if has_goal %}
+          <form method="post" action="/goals/delete" class="inline-form"
+                onsubmit="return confirm('Clear all daily goals for this profile?');">
+            <button type="submit" class="btn-danger">Clear goals</button>
+          </form>
+        {% endif %}
+      </div>
+    </form>
+  </section>
+
+  <!-- Goals preview / summary -->
+  <section class="card goals-summary">
+    <div class="card-header">
+      <h2>Current targets</h2>
+    </div>
+
+    {% if has_goal and goal %}
+      <ul class="goals-summary-list">
+        <li>
+          <span class="label">Calories</span>
+          <span class="value">
+            {% if goal.daily_calories is not none %}
+              {{ goal.daily_calories | round(0) }} kcal
+            {% else %}
+              –
+            {% endif %}
+          </span>
+        </li>
+        <li>
+          <span class="label">Protein</span>
+          <span class="value">
+            {% if goal.daily_protein_g is not none %}
+              {{ goal.daily_protein_g | round(1) }} g
+            {% else %}
+              –
+            {% endif %}
+          </span>
+        </li>
+        <li>
+          <span class="label">Carbs</span>
+          <span class="value">
+            {% if goal.daily_carbs_g is not none %}
+              {{ goal.daily_carbs_g | round(1) }} g
+            {% else %}
+              –
+            {% endif %}
+          </span>
+        </li>
+        <li>
+          <span class="label">Fat</span>
+          <span class="value">
+            {% if goal.daily_fat_g is not none %}
+              {{ goal.daily_fat_g | round(1) }} g
+            {% else %}
+              –
+            {% endif %}
+          </span>
+        </li>
+      </ul>
+      <p class="goals-note">
+        These goals are used to calculate the % progress and remaining amounts shown on your dashboard cards.
+      </p>
+    {% else %}
+      <p class="empty-state">
+        You haven't set any daily goals yet. Use the form on the left to add calorie and macro targets.
+      </p>
+    {% endif %}
+  </section>
+</div>
+
+{% endblock %}

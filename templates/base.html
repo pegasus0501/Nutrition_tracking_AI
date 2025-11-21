@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Food Nutrition Tracker</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <!-- Add this before </head> in base.html -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="header">
+  <div class="logo">
+    <a href="/">Food Nutrition Tracker</a>
+  </div>
+  <nav class="nav">
+    <a href="/">Home</a>
+    {% if user %}
+      <a href="/dashboard">Dashboard</a>
+      <span class="nav-text">Hi, {{ user.email }}</span>
+      <a href="/logout">Logout</a>
+    {% else %}
+      <a href="/login">Login</a>
+      <a href="/register">Sign up</a>
+    {% endif %}
+  </nav>
+</header>
+
+<main class="main">
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

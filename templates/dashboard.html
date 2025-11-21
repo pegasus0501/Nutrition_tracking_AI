@@ -1,0 +1,954 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Alert Container for Goal Exceeded Warnings -->
+<div id="alertContainer" class="alert-container">
+  <div class="alert-container-header" id="alertHeader" style="display: none;">
+    <span style="font-size: 0.85rem; color: #e5e7eb;">Goal Alerts</span>
+    <button class="close-all-btn" onclick="closeAllAlerts()">Close All</button>
+  </div>
+</div>
+
+<div class="dash-hero">
+  <div>
+    <h1>Daily Dashboard</h1>
+    <p>Track your daily nutrition progress</p>
+  </div>
+</div>
+
+<div class="view-row">
+  <div class="view-label">View:</div>
+  <div class="view-buttons">
+    <a href="/dashboard?view=today" class="pill {% if view == 'today' %}pill-active{% endif %}">Today</a>
+    <a href="/dashboard?view=twoweeks" class="pill {% if view == 'twoweeks' %}pill-active{% endif %}">Two weeks</a>
+  </div>
+</div>
+
+{% if view == "twoweeks" %}
+
+<!-- Two Weeks Progress View -->
+<section class="card two-week-card">
+  <h2>Two Weeks Progress</h2>
+
+  <div class="two-week-chart-container">
+    <div class="chart-wrapper">
+      <canvas id="twoWeekChart"></canvas>
+    </div>
+    <div class="chart-legend">
+      <span class="legend-item">
+        <span class="legend-line goal-line"></span>
+        Daily calories vs goal (red line). Today is highlighted in blue.
+      </span>
+    </div>
+  </div>
+
+  <div class="two-week-stats">
+    <div class="stat-card">
+      <span class="stat-icon">🧮</span>
+      <div class="stat-content">
+        <div class="stat-label">Average Daily Calories</div>
+        <div class="stat-value">{{ "%.0f"|format(avg_daily_calories) }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-icon">🎯</span>
+      <div class="stat-content">
+        <div class="stat-label">Days On Track</div>
+        <div class="stat-value">{{ days_on_track }}/14</div>
+      </div>
+    </div>
+
+    {% if best_day %}
+    <div class="stat-card">
+      <span class="stat-icon">🏆</span>
+      <div class="stat-content">
+        <div class="stat-label">Best Day ({{ best_day.date_str }})</div>
+        <div class="stat-value">{{ "%.0f"|format(best_day.energy_kcal) }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="stat-card">
+      <span class="stat-icon">📊</span>
+      <div class="stat-content">
+        <div class="stat-label">Total 2 Weeks</div>
+        <div class="stat-value">{{ "%.0f"|format(total_calories) }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% else %}
+
+<!-- Today Summary Cards -->
+<div class="summary-grid">
+  <div class="summary-card calories">
+    <div class="summary-label">Calories</div>
+    <div class="summary-value">
+      {{ "%.0f"|format(totals.energy_kcal or 0) }}<span class="unit"> kcal</span>
+    </div>
+    {% if goal and goal.daily_calories %}
+    <div class="summary-sub">
+      of {{ "%.0f"|format(goal.daily_calories) }} kcal goal
+    </div>
+    {% else %}
+    <div class="summary-sub">Set a daily calorie goal</div>
+    {% endif %}
+  </div>
+
+  <div class="summary-card protein">
+    <div class="summary-label">Protein</div>
+    <div class="summary-value">
+      {{ "%.1f"|format(totals.protein_g or 0) }}<span class="unit"> g</span>
+    </div>
+    {% if goal and goal.daily_protein_g %}
+    <div class="summary-sub">
+      Target: {{ "%.1f"|format(goal.daily_protein_g) }} g
+    </div>
+    {% else %}
+    <div class="summary-sub">Set a protein goal</div>
+    {% endif %}
+  </div>
+
+  <div class="summary-card carbs">
+    <div class="summary-label">Carbs</div>
+    <div class="summary-value">
+      {{ "%.1f"|format(totals.carbs_g or 0) }}<span class="unit"> g</span>
+    </div>
+    {% if goal and goal.daily_carbs_g %}
+    <div class="summary-sub">
+      Target: {{ "%.1f"|format(goal.daily_carbs_g) }} g
+    </div>
+    {% else %}
+    <div class="summary-sub">Set a carb goal</div>
+    {% endif %}
+  </div>
+
+  <div class="summary-card fat">
+    <div class="summary-label">Fat</div>
+    <div class="summary-value">
+      {{ "%.1f"|format(totals.fat_g or 0) }}<span class="unit"> g</span>
+    </div>
+    {% if goal and goal.daily_fat_g %}
+    <div class="summary-sub">
+      Target: {{ "%.1f"|format(goal.daily_fat_g) }} g
+    </div>
+    {% else %}
+    <div class="summary-sub">Set a fat goal</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endif %}
+
+<div class="quick-actions">
+  <h2>Quick Actions</h2>
+  <div class="qa-buttons">
+    <a href="/" class="btn-primary">+ Add Food</a>
+    <a href="/goals" class="btn-secondary">⚙️ Update Goal</a>
+    <a href="/personal-info" class="btn-secondary">👤 Personal Info</a>
+    <button class="btn-secondary" disabled>📤 Share Progress</button>
+  </div>
+</div>
+
+<!-- AI Health Coach Section -->
+<section class="card ai-coach-card" style="margin-top: 2rem; border-left: 5px solid #8b5cf6;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div>
+      <h2 style="margin: 0; color: #8b5cf6;">🤖 AI Health Coach</h2>
+      <p style="margin: 0.5rem 0 0; color: #9ca3af; font-size: 0.9rem;">Personalized advice based on your goals and
+        today's logs.</p>
+    </div>
+    <button id="generate-btn" onclick="generateRecommendations()" class="btn-primary"
+      style="background: #8b5cf6; border-color: #7c3aed;">
+      ✨ Generate Advice
+    </button>
+  </div>
+
+  <div id="ai-loading" style="display: none; text-align: center; padding: 2rem;">
+    <div class="spinner"
+      style="border: 4px solid #f3f3f3; border-top: 4px solid #8b5cf6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 1rem;">
+    </div>
+    <p style="color: #9ca3af;">Analyzing your nutrition data...</p>
+  </div>
+
+  <div id="ai-results" style="display: none;">
+    <ul id="recommendations-list" style="list-style: none; padding: 0; margin: 0;">
+      <!-- Recommendations will be injected here -->
+    </ul>
+  </div>
+</section>
+
+<!-- Personalized Strategy Plan Section -->
+<section class="card plan-card" style="margin-top: 2rem; border-left: 5px solid #10b981;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div>
+      <h2 style="margin: 0; color: #10b981;">🚀 Personalized Strategy Plan</h2>
+      <p style="margin: 0.5rem 0 0; color: #9ca3af; font-size: 0.9rem;">Long-term strategy for your specific goal.</p>
+    </div>
+    <button id="plan-btn" onclick="generatePlan()" class="btn-primary"
+      style="background: #10b981; border-color: #059669;">
+      📝 Create My Plan
+    </button>
+  </div>
+
+  <div id="plan-loading" style="display: none; text-align: center; padding: 2rem;">
+    <div class="spinner"
+      style="border: 4px solid #f3f3f3; border-top: 4px solid #10b981; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 1rem;">
+    </div>
+    <p style="color: #9ca3af;">Designing your strategy...</p>
+  </div>
+
+  <div id="plan-results" style="display: none; display: grid; grid-template-columns: 1fr; gap: 1rem;">
+    <div class="plan-section" style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px;">
+      <h3 style="color: #10b981; margin-top: 0;">🏋️ Exercise Strategy</h3>
+      <p id="plan-exercise" style="color: #e5e7eb; line-height: 1.6;"></p>
+    </div>
+    <div class="plan-section" style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px;">
+      <h3 style="color: #10b981; margin-top: 0;">🥗 Nutrition Focus</h3>
+      <p id="plan-diet" style="color: #e5e7eb; line-height: 1.6;"></p>
+    </div>
+    <div class="plan-section" style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px;">
+      <h3 style="color: #10b981; margin-top: 0;">🧘 Key Habits</h3>
+      <p id="plan-habit" style="color: #e5e7eb; line-height: 1.6;"></p>
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .rec-item {
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.8rem;
+    border-left: 4px solid #8b5cf6;
+    color: #e5e7eb;
+    line-height: 1.5;
+  }
+</style>
+
+{% if view == "today" %}
+
+<!-- Daily goal progress -->
+<section class="card goal-progress-card">
+  <h2>Daily goal progress</h2>
+
+  {% set cal = nutrient_progress.calories %}
+  {% set prot = nutrient_progress.protein %}
+  {% set carbs = nutrient_progress.carbs %}
+  {% set fat = nutrient_progress.fat %}
+
+  <div class="goal-row">
+    <div class="goal-row-header">
+      <span class="goal-row-label">Calories</span>
+      {% if cal.goal %}
+      <span class="goal-row-amount">
+        {{ "%.0f"|format(cal.consumed) }} / {{ "%.0f"|format(cal.goal) }} kcal
+      </span>
+      {% else %}
+      <span class="goal-row-amount">No goal set</span>
+      {% endif %}
+    </div>
+    <div class="goal-progress-bar">
+      <div class="goal-progress-fill" style="width: {{ cal.pct or 0 }}%;"></div>
+    </div>
+    {% if cal.pct_text %}
+    <p class="goal-percent">{{ cal.pct_text }} of calorie goal reached</p>
+    {% endif %}
+  </div>
+
+  <div class="goal-row">
+    <div class="goal-row-header">
+      <span class="goal-row-label">Protein</span>
+      {% if prot.goal %}
+      <span class="goal-row-amount">
+        {{ "%.1f"|format(prot.consumed) }} / {{ "%.1f"|format(prot.goal) }} g
+      </span>
+      {% else %}
+      <span class="goal-row-amount">No goal set</span>
+      {% endif %}
+    </div>
+    <div class="goal-progress-bar">
+      <div class="goal-progress-fill protein-fill" style="width: {{ prot.pct or 0 }}%;"></div>
+    </div>
+  </div>
+
+  <div class="goal-row">
+    <div class="goal-row-header">
+      <span class="goal-row-label">Carbs</span>
+      {% if carbs.goal %}
+      <span class="goal-row-amount">
+        {{ "%.1f"|format(carbs.consumed) }} / {{ "%.1f"|format(carbs.goal) }} g
+      </span>
+      {% else %}
+      <span class="goal-row-amount">No goal set</span>
+      {% endif %}
+    </div>
+    <div class="goal-progress-bar">
+      <div class="goal-progress-fill carbs-fill" style="width: {{ carbs.pct or 0 }}%;"></div>
+    </div>
+  </div>
+
+  <div class="goal-row">
+    <div class="goal-row-header">
+      <span class="goal-row-label">Fat</span>
+      {% if fat.goal %}
+      <span class="goal-row-amount">
+        {{ "%.1f"|format(fat.consumed) }} / {{ "%.1f"|format(fat.goal) }} g
+      </span>
+      {% else %}
+      <span class="goal-row-amount">No goal set</span>
+      {% endif %}
+    </div>
+    <div class="goal-progress-bar">
+      <div class="goal-progress-fill fat-fill" style="width: {{ fat.pct or 0 }}%;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Macro breakdown -->
+{% if macro_breakdown.has_data %}
+<section class="card macro-card">
+  <h2>Macronutrients Breakdown</h2>
+
+  <div class="macro-chart-container">
+    <div class="macro-chart-wrapper">
+      <canvas id="macroChart"></canvas>
+    </div>
+    <div class="macro-legend">
+      <div class="macro-legend-item">
+        <span class="macro-dot carbs"></span>
+        <span class="macro-legend-label">Carbs</span>
+        <span class="macro-legend-value">{{ "%.0f"|format(macro_breakdown.carbs_pct) }}%</span>
+      </div>
+      <div class="macro-legend-item">
+        <span class="macro-dot protein"></span>
+        <span class="macro-legend-label">Protein</span>
+        <span class="macro-legend-value">{{ "%.0f"|format(macro_breakdown.protein_pct) }}%</span>
+      </div>
+      <div class="macro-legend-item">
+        <span class="macro-dot fat"></span>
+        <span class="macro-legend-label">Fat</span>
+        <span class="macro-legend-value">{{ "%.0f"|format(macro_breakdown.fat_pct) }}%</span>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Meal list -->
+<div class="meal-grid">
+  {% for meal in meal_order %}
+  {% set key = meal.lower() %}
+  {% set logs = logs_by_meal.get(key) %}
+  {% set mt = meal_totals.get(key) %}
+
+  <div class="meal-card">
+    <div class="meal-header">
+      <div class="meal-title">
+        {% if meal == "Breakfast" %}☕{% elif meal == "Lunch" %}🍔{% elif meal == "Dinner" %}🍽️{% else %}🍪{% endif %}
+        {{ meal }}
+      </div>
+      <a href="/" class="meal-add">+ Add</a>
+    </div>
+
+    <div class="meal-body">
+      {% if logs %}
+      {% for log in logs %}
+      <div class="meal-entry">
+        <div class="meal-entry-main">
+          <div class="entry-name">{{ log.description }}</div>
+          <div class="entry-serving">
+            {{ log.serving_size_label or "1 serving" }}
+          </div>
+          <div class="entry-kcal">
+            {{ "%.0f"|format(log.energy_kcal or 0) }} cal
+          </div>
+          <div class="entry-macros">
+            P: {{ "%.1f"|format(log.protein_g or 0) }}g |
+            C: {{ "%.1f"|format(log.carbs_g or 0) }}g |
+            F: {{ "%.1f"|format(log.fat_g or 0) }}g
+          </div>
+        </div>
+        <form method="post" action="/log/delete/{{ log.id }}">
+          <button type="submit" class="delete-btn">🗑</button>
+        </form>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="meal-empty">
+        No {{ meal | lower }} logged yet<br>
+        <span class="subtext">Add foods to track your {{ meal | lower }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="meal-footer">
+      <div class="meal-total-label">Total</div>
+      <div class="meal-total-values">
+        <span>{{ "%.0f"|format((mt.energy_kcal if mt else 0) or 0) }} cal</span>
+        <span>P: {{ "%.1f"|format((mt.protein_g if mt else 0) or 0) }}g</span>
+        <span>C: {{ "%.1f"|format((mt.carbs_g if mt else 0) or 0) }}g</span>
+        <span>F: {{ "%.1f"|format((mt.fat_g if mt else 0) or 0) }}g</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endif %}
+
+<!-- Chart.js scripts -->
+{% if view == "today" and macro_breakdown.has_data %}
+<script>
+  const macroCtx = document.getElementById('macroChart');
+  new Chart(macroCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Carbs', 'Protein', 'Fat'],
+      datasets: [{
+        data: [
+          {{ macro_breakdown.carbs_pct }},
+      {{ macro_breakdown.protein_pct }},
+          {{ macro_breakdown.fat_pct }}
+        ],
+    backgroundColor: ['#4ade80', '#60a5fa', '#facc6b'],
+    borderWidth: 0
+      }]
+    },
+    options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return context.label + ': ' + context.parsed.toFixed(1) + '%';
+          }
+        }
+      }
+    },
+    cutout: '60%'
+  }
+  });
+</script>
+{% endif %}
+
+{% if view == "twoweeks" %}
+<script>
+  const ctx = document.getElementById('twoWeekChart');
+  const twoWeekData = {{ two_week_data | tojson }};
+  const goalCalories = {{ goal_calories if goal_calories else 'null' }};
+  const labels = twoWeekData.map(d => d.date_str);
+  const calories = twoWeekData.map(d => d.energy_kcal);
+  const isToday = twoWeekData.map(d => d.is_today);
+
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Daily Calories',
+        data: calories,
+        backgroundColor: calories.map((cal, i) => isToday[i] ? '#3b82f6' : '#4ade80'),
+        borderColor: calories.map((cal, i) => isToday[i] ? '#2563eb' : '#22c55e'),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#9ca3af' },
+          grid: { color: 'rgba(255, 255, 255, 0.1)' }
+        },
+        x: {
+          ticks: { color: '#9ca3af' },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  if (goalCalories) {
+    chart.data.datasets.push({
+      type: 'line',
+      label: 'Goal',
+      data: Array(labels.length).fill(goalCalories),
+      borderColor: '#ef4444',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false
+    });
+    chart.update();
+  }
+</script>
+{% endif %}
+
+<!-- Alert system script (shared) -->
+<script>
+  function showAlert(type, title, message) {
+    const container = document.getElementById('alertContainer');
+    if (!container) return;
+
+    const header = document.getElementById('alertHeader');
+    if (header) header.style.display = 'flex';
+
+    const alert = document.createElement('div');
+    alert.className = `alert-popup ${type}`;
+    const icons = { 'error': '⚠️', 'warning': '⚠️', 'info': 'ℹ️' };
+    alert.innerHTML = `
+      <span class="alert-icon">${icons[type] || '⚠️'}</span>
+      <div class="alert-content">
+        <div class="alert-title">${title}</div>
+        <div class="alert-message">${message}</div>
+      </div>
+      <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    container.appendChild(alert);
+
+    setTimeout(() => {
+      if (alert.parentElement) {
+        alert.style.animation = 'slideInRight 0.3s ease-out reverse';
+        setTimeout(() => {
+          alert.remove();
+          const remaining = container.querySelectorAll('.alert-popup');
+          if (remaining.length === 0 && header) header.style.display = 'none';
+        }, 300);
+      }
+    }, 8000);
+  }
+
+  function closeAllAlerts() {
+    const container = document.getElementById('alertContainer');
+    const alerts = container.querySelectorAll('.alert-popup');
+    alerts.forEach(alert => {
+      alert.style.animation = 'slideInRight 0.3s ease-out reverse';
+      setTimeout(() => alert.remove(), 300);
+    });
+    const header = document.getElementById('alertHeader');
+    if (header) header.style.display = 'none';
+  }
+
+  // WebSocket connection and real-time updates
+  let ws = null;
+  let reconnectAttempts = 0;
+  const maxReconnectAttempts = 5;
+
+  function connectWebSocket(userId) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/${userId}`;
+
+    try {
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = function () {
+        console.log('WebSocket connected');
+        reconnectAttempts = 0;
+        // Send ping to keep connection alive
+        setInterval(() => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send('ping');
+          }
+        }, 30000);
+      };
+
+      ws.onmessage = function (event) {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'food_logged' || message.type === 'food_deleted') {
+            updateDashboard(message.data);
+          }
+        } catch (e) {
+          // Handle pong or other non-JSON messages
+          if (event.data === 'pong') {
+            return;
+          }
+          console.error('Error parsing WebSocket message:', e);
+        }
+      };
+
+      ws.onerror = function (error) {
+        console.error('WebSocket error:', error);
+      };
+
+      ws.onclose = function () {
+        console.log('WebSocket disconnected');
+        // Attempt to reconnect
+        if (reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++;
+          setTimeout(() => connectWebSocket(userId), 2000 * reconnectAttempts);
+        }
+      };
+    } catch (error) {
+      console.error('Failed to connect WebSocket:', error);
+    }
+  }
+
+  // Update dashboard UI with new data
+  function updateDashboard(data) {
+    if (!data || !data.totals) return;
+
+    // Update summary cards
+    const totals = data.totals;
+    updateElement('.summary-card.calories .summary-value', `${Math.round(totals.energy_kcal || 0)}<span class="unit"> kcal</span>`);
+    updateElement('.summary-card.protein .summary-value', `${(totals.protein_g || 0).toFixed(1)}<span class="unit"> g</span>`);
+    updateElement('.summary-card.carbs .summary-value', `${(totals.carbs_g || 0).toFixed(1)}<span class="unit"> g</span>`);
+    updateElement('.summary-card.fat .summary-value', `${(totals.fat_g || 0).toFixed(1)}<span class="unit"> g</span>`);
+
+    // Update progress bars
+    if (data.nutrient_progress) {
+      const cal = data.nutrient_progress.calories;
+      const prot = data.nutrient_progress.protein;
+      const carbs = data.nutrient_progress.carbs;
+      const fat = data.nutrient_progress.fat;
+
+      updateProgressBar('Calories', cal);
+      updateProgressBar('Protein', prot);
+      updateProgressBar('Carbs', carbs);
+      updateProgressBar('Fat', fat);
+
+      // Check for exceeded goals and show alerts
+      checkGoalAlerts(cal, prot, carbs, fat);
+    }
+
+    // Update meal cards
+    if (data.logs_by_meal && data.meal_order && data.meal_totals) {
+      updateMealCards(data.logs_by_meal, data.meal_order, data.meal_totals);
+    }
+
+    // Update macro breakdown chart if it exists
+    if (data.macro_breakdown && data.macro_breakdown.has_data) {
+      updateMacroChart(data.macro_breakdown);
+    }
+  }
+
+  function updateElement(selector, html) {
+    const element = document.querySelector(selector);
+    if (element) {
+      element.innerHTML = html;
+    }
+  }
+
+  function updateProgressBar(labelText, progress) {
+    const rows = document.querySelectorAll('.goal-row');
+    const row = Array.from(rows).find(r => {
+      const label = r.querySelector('.goal-row-label');
+      return label && label.textContent.trim() === labelText;
+    });
+    if (!row) return;
+
+    const bar = row.querySelector('.goal-progress-fill');
+    const amount = row.querySelector('.goal-row-amount');
+    const percent = row.querySelector('.goal-percent');
+
+    if (bar) {
+      bar.style.width = `${progress.pct || 0}%`;
+    }
+    if (amount) {
+      if (progress.goal) {
+        amount.textContent = `${progress.consumed.toFixed(progress.unit === 'kcal' ? 0 : 1)} / ${progress.goal.toFixed(progress.unit === 'kcal' ? 0 : 1)} ${progress.unit}`;
+      } else {
+        amount.textContent = 'No goal set';
+      }
+    }
+    if (percent) {
+      if (progress.pct_text) {
+        percent.textContent = `${progress.pct_text} of ${progress.unit === 'kcal' ? 'calorie' : progress.unit} goal reached`;
+      } else {
+        percent.textContent = '';
+      }
+    }
+  }
+
+  function updateMealCards(logsByMeal, mealOrder, mealTotals) {
+    mealOrder.forEach(meal => {
+      const key = meal.toLowerCase();
+      const logs = logsByMeal[key] || [];
+      const totals = mealTotals[key] || { energy_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
+
+      // Find meal card
+      const mealCard = Array.from(document.querySelectorAll('.meal-card')).find(card => {
+        const title = card.querySelector('.meal-title');
+        return title && title.textContent.includes(meal);
+      });
+
+      if (!mealCard) return;
+
+      const mealBody = mealCard.querySelector('.meal-body');
+      const mealFooter = mealCard.querySelector('.meal-footer');
+
+      // Update meal entries
+      if (mealBody) {
+        if (logs.length === 0) {
+          mealBody.innerHTML = `
+            <div class="meal-empty">
+              No ${meal.toLowerCase()} logged yet<br>
+              <span class="subtext">Add foods to track your ${meal.toLowerCase()}</span>
+            </div>
+          `;
+        } else {
+          mealBody.innerHTML = logs.map(log => `
+            <div class="meal-entry">
+              <div class="meal-entry-main">
+                <div class="entry-name">${log.description}</div>
+                <div class="entry-serving">${log.serving_size_label || '1 serving'}</div>
+                <div class="entry-kcal">${Math.round(log.energy_kcal || 0)} cal</div>
+                <div class="entry-macros">
+                  P: ${(log.protein_g || 0).toFixed(1)}g |
+                  C: ${(log.carbs_g || 0).toFixed(1)}g |
+                  F: ${(log.fat_g || 0).toFixed(1)}g
+                </div>
+              </div>
+              <form method="post" action="/log/delete/${log.id}" class="delete-form">
+                <button type="submit" class="delete-btn">🗑</button>
+              </form>
+            </div>
+          `).join('');
+
+          // Re-attach delete handlers
+          attachDeleteHandlers();
+        }
+      }
+
+      // Update meal totals
+      if (mealFooter) {
+        const values = mealFooter.querySelector('.meal-total-values');
+        if (values) {
+          values.innerHTML = `
+            <span>${Math.round(totals.energy_kcal || 0)} cal</span>
+            <span>P: ${(totals.protein_g || 0).toFixed(1)}g</span>
+            <span>C: ${(totals.carbs_g || 0).toFixed(1)}g</span>
+            <span>F: ${(totals.fat_g || 0).toFixed(1)}g</span>
+          `;
+        }
+      }
+    });
+  }
+
+  function updateMacroChart(macroBreakdown) {
+    const chartElement = document.getElementById('macroChart');
+    if (!chartElement) return;
+
+    const chart = Chart.getChart(chartElement);
+    if (chart) {
+      chart.data.datasets[0].data = [
+        macroBreakdown.carbs_pct,
+        macroBreakdown.protein_pct,
+        macroBreakdown.fat_pct
+      ];
+      chart.update();
+
+      // Update legend
+      document.querySelector('.macro-legend-item:nth-child(1) .macro-legend-value').textContent = `${Math.round(macroBreakdown.carbs_pct)}%`;
+      document.querySelector('.macro-legend-item:nth-child(2) .macro-legend-value').textContent = `${Math.round(macroBreakdown.protein_pct)}%`;
+      document.querySelector('.macro-legend-item:nth-child(3) .macro-legend-value').textContent = `${Math.round(macroBreakdown.fat_pct)}%`;
+    }
+  }
+
+  function checkGoalAlerts(cal, prot, carbs, fat) {
+    if (cal.goal && cal.pct > 100) {
+      const exceeded = cal.consumed - cal.goal;
+      showAlert('error', 'Calorie Goal Exceeded!', `You've consumed ${exceeded.toFixed(0)} kcal over your daily goal of ${cal.goal} kcal.`);
+    }
+    if (prot.goal && prot.pct > 100) {
+      const exceeded = prot.consumed - prot.goal;
+      showAlert('warning', 'Protein Goal Exceeded', `You've consumed ${exceeded.toFixed(1)}g over your protein goal of ${prot.goal}g.`);
+    }
+    if (carbs.goal && carbs.pct > 100) {
+      const exceeded = carbs.consumed - carbs.goal;
+      showAlert('warning', 'Carb Goal Exceeded', `You've consumed ${exceeded.toFixed(1)}g over your carb goal of ${carbs.goal}g.`);
+    }
+    if (fat.goal && fat.pct > 100) {
+      const exceeded = fat.consumed - fat.goal;
+      showAlert('warning', 'Fat Goal Exceeded', `You've consumed ${exceeded.toFixed(1)}g over your fat goal of ${fat.goal}g.`);
+    }
+  }
+
+  function attachDeleteHandlers() {
+    document.querySelectorAll('.delete-form').forEach(form => {
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const logId = form.action.split('/').pop();
+        const button = form.querySelector('button');
+        button.disabled = true;
+
+        try {
+          const response = await fetch(`/log/delete/${logId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            // Dashboard will be updated via WebSocket
+            button.textContent = '✓';
+            setTimeout(() => {
+              form.closest('.meal-entry')?.remove();
+            }, 500);
+          } else {
+            alert('Error deleting food');
+            button.disabled = false;
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Error deleting food');
+          button.disabled = false;
+        }
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    {% if user %}
+    // Connect to WebSocket
+    connectWebSocket({{ user.id }});
+
+  // Attach delete handlers
+  attachDeleteHandlers();
+  {% endif %}
+
+  {% if view == "today" %}
+  {% set cal = nutrient_progress.calories %}
+  {% set prot = nutrient_progress.protein %}
+  {% set carbs = nutrient_progress.carbs %}
+  {% set fat = nutrient_progress.fat %}
+
+  {% if cal.goal and cal.pct > 100 %}
+  const calExceeded = {{ cal.consumed }} - {{ cal.goal }};
+  showAlert('error', 'Calorie Goal Exceeded!', `You've consumed ${calExceeded.toFixed(0)} kcal over your daily goal of {{ cal.goal }} kcal.`);
+  {% endif %}
+
+  {% if prot.goal and prot.pct > 100 %}
+  const protExceeded = {{ prot.consumed }} - {{ prot.goal }};
+  showAlert('warning', 'Protein Goal Exceeded', `You've consumed ${protExceeded.toFixed(1)}g over your protein goal of {{ prot.goal }}g.`);
+  {% endif %}
+
+  {% if carbs.goal and carbs.pct > 100 %}
+  const carbsExceeded = {{ carbs.consumed }} - {{ carbs.goal }};
+  showAlert('warning', 'Carb Goal Exceeded', `You've consumed ${carbsExceeded.toFixed(1)}g over your carb goal of {{ carbs.goal }}g.`);
+  {% endif %}
+
+  {% if fat.goal and fat.pct > 100 %}
+  const fatExceeded = {{ fat.consumed }} - {{ fat.goal }};
+  showAlert('warning', 'Fat Goal Exceeded', `You've consumed ${fatExceeded.toFixed(1)}g over your fat goal of {{ fat.goal }}g.`);
+  {% endif %}
+  {% endif %}
+  });
+
+
+  async function generateRecommendations() {
+    const btn = document.getElementById('generate-btn');
+    const loading = document.getElementById('ai-loading');
+    const results = document.getElementById('ai-results');
+    const list = document.getElementById('recommendations-list');
+
+    // Reset UI
+    btn.disabled = true;
+    btn.innerHTML = 'Generating...';
+    loading.style.display = 'block';
+    results.style.display = 'none';
+    list.innerHTML = '';
+
+    try {
+      const response = await fetch('/api/recommendations/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert('Error: ' + data.error);
+        return;
+      }
+
+      if (data.recommendations && data.recommendations.length > 0) {
+        data.recommendations.forEach(rec => {
+          const li = document.createElement('li');
+          li.className = 'rec-item';
+          li.textContent = rec;
+          list.appendChild(li);
+        });
+        results.style.display = 'block';
+      } else {
+        alert('No recommendations received.');
+      }
+
+    } catch (error) {
+      console.error('Error generating recommendations:', error);
+      alert('Failed to generate recommendations. Please try again.');
+    } finally {
+      loading.style.display = 'none';
+      btn.disabled = false;
+      btn.innerHTML = '✨ Generate Advice';
+    }
+  }
+
+  async function generatePlan() {
+    const btn = document.getElementById('plan-btn');
+    const loading = document.getElementById('plan-loading');
+    const results = document.getElementById('plan-results');
+
+    const exerciseEl = document.getElementById('plan-exercise');
+    const dietEl = document.getElementById('plan-diet');
+    const habitEl = document.getElementById('plan-habit');
+
+    // Reset UI
+    btn.disabled = true;
+    btn.innerHTML = 'Creating...';
+    loading.style.display = 'block';
+    results.style.display = 'none';
+
+    try {
+      const response = await fetch('/api/plan/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert('Error: ' + data.error);
+        return;
+      }
+
+      exerciseEl.textContent = data.exercise_plan || "No plan generated.";
+      dietEl.textContent = data.diet_plan || "No plan generated.";
+      habitEl.textContent = data.habit_plan || "No plan generated.";
+
+      results.style.display = 'grid';
+
+    } catch (error) {
+      console.error('Error generating plan:', error);
+      alert('Failed to generate plan. Please try again.');
+    } finally {
+      loading.style.display = 'none';
+      btn.disabled = false;
+      btn.innerHTML = '📝 Create My Plan';
+    }
+  }
+</script>
+
+{% endblock %}
