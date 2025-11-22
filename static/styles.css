@@ -49,7 +49,9 @@ main,
   margin-bottom: 1.5rem;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   margin-top: 0;
 }
 
@@ -103,7 +105,8 @@ table {
   margin-top: 0.75rem;
 }
 
-th, td {
+th,
+td {
   padding: 0.5rem;
   border-bottom: 1px solid #23263b;
   text-align: left;
@@ -197,10 +200,21 @@ tr:nth-child(odd) td {
   color: #8f94b8;
 }
 
-.summary-card.calories { border-top: 3px solid #805bff; }
-.summary-card.protein  { border-top: 3px solid #1ddf7c; }
-.summary-card.carbs    { border-top: 3px solid #ffb52a; }
-.summary-card.fat      { border-top: 3px solid #2ac2ff; }
+.summary-card.calories {
+  border-top: 3px solid #805bff;
+}
+
+.summary-card.protein {
+  border-top: 3px solid #1ddf7c;
+}
+
+.summary-card.carbs {
+  border-top: 3px solid #ffb52a;
+}
+
+.summary-card.fat {
+  border-top: 3px solid #2ac2ff;
+}
 
 /* View + quick actions */
 
@@ -433,8 +447,8 @@ tr:nth-child(odd) td {
   width: 100%;
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.25);
   color: #ffffff;
 }
 
@@ -464,7 +478,7 @@ tr:nth-child(odd) td {
   display: flex;
   justify-content: space-between;
   padding: 0.4rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .goals-summary-list .label {
@@ -595,11 +609,9 @@ tr:nth-child(odd) td {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: linear-gradient(
-    90deg,
-    rgba(129, 140, 248, 1),
-    rgba(59, 130, 246, 1)
-  );
+  background-image: linear-gradient(90deg,
+      rgba(129, 140, 248, 1),
+      rgba(59, 130, 246, 1));
   color: #f9fafb;
   font-size: 0.82rem;
   font-weight: 500;
@@ -650,15 +662,18 @@ tr:nth-child(odd) td {
 }
 
 .macro-dot.carbs {
-  background: #4ade80;   /* green */
+  background: #4ade80;
+  /* green */
 }
 
 .macro-dot.protein {
-  background: #60a5fa;   /* blue */
+  background: #60a5fa;
+  /* blue */
 }
 
 .macro-dot.fat {
-  background: #facc6b;   /* yellow */
+  background: #facc6b;
+  /* yellow */
 }
 
 .macro-legend-label {
@@ -679,10 +694,12 @@ tr:nth-child(odd) td {
   border-radius: 50%;
   margin: 0 auto 1rem;
   background:
-    conic-gradient(
-      #4ade80 0 56%,    /* Carbs 56% */
-      #60a5fa 56% 76%,  /* Protein 20% */
-      #facc6b 76% 100%  /* Fat 24% */
+    conic-gradient(#4ade80 0 56%,
+      /* Carbs 56% */
+      #60a5fa 56% 76%,
+      /* Protein 20% */
+      #facc6b 76% 100%
+      /* Fat 24% */
     );
   display: flex;
   align-items: center;
@@ -786,6 +803,7 @@ tr:nth-child(odd) td {
   color: #a5accc;
   margin-top: 0.3rem;
 }
+
 /* Macro chart container */
 .macro-chart-container {
   display: flex;
@@ -887,6 +905,7 @@ tr:nth-child(odd) td {
     transform: translateX(400px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1224,7 +1243,9 @@ tr:nth-child(odd) td {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Mobile Search Bar Polish */
@@ -1243,4 +1264,85 @@ tr:nth-child(odd) td {
 .search-form button {
   padding: 0.5rem 1.25rem;
   white-space: nowrap;
+}
+
+/* === Mobile-Specific Overrides (Phones) === */
+@media (max-width: 600px) {
+
+  /* Increase base font size for better readability */
+  html {
+    font-size: 18px;
+  }
+
+  /* Make the main container fill the width */
+  main,
+  .main {
+    padding: 1rem;
+  }
+
+  /* Bigger headings */
+  h1 {
+    font-size: 2.2rem;
+  }
+
+  h2 {
+    font-size: 1.8rem;
+  }
+
+  h3 {
+    font-size: 1.4rem;
+  }
+
+  /* Taller inputs for easier tapping */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"] {
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+  }
+
+  /* Bigger Buttons */
+  button,
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  /* Stack the action buttons vertically if needed, or keep grid but bigger */
+  .action-buttons {
+    gap: 0.8rem;
+  }
+
+  .action-btn {
+    padding: 1.2rem 0.5rem;
+  }
+
+  .icon-circle {
+    width: 56px;
+    height: 56px;
+    font-size: 1.8rem;
+  }
+
+  .btn-text {
+    font-size: 1.1rem;
+  }
+
+  /* Adjust the search bar layout for mobile */
+  .search-form {
+    flex-direction: column;
+  }
+
+  .search-form button {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  /* Make table text readable without zooming */
+  th,
+  td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.95rem;
+  }
 }
