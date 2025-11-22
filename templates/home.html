@@ -3,25 +3,20 @@
 <h1>Quick Nutrition Lookup</h1>
 
 {% if error %}
-  <div class="error">{{ error }}</div>
+<div class="error">{{ error }}</div>
 {% endif %}
 
 <section class="card">
   <h2>Search by food name</h2>
   <form method="post" action="/search" class="search-form">
-    <input
-      type="text"
-      name="query"
-      placeholder="e.g. chicken, banana, apple"
-      required
-    >
+    <input type="text" name="query" placeholder="e.g. chicken, banana, apple" required>
     <button type="submit">Search</button>
   </form>
 
   {% if results %}
-    <h3>Results</h3>
-    <table>
-      <thead>
+  <h3>Results</h3>
+  <table>
+    <thead>
       <tr>
         <th>Description</th>
         <th>Brand</th>
@@ -34,133 +29,158 @@
         <th>Fat (g)</th>
         <th>Action</th>
       </tr>
-      </thead>
-      <tbody>
+    </thead>
+    <tbody>
       {% for item in results %}
-        <tr>
-          <td>{{ item.description }}</td>
-          <td>{{ item.brandOwner or "-" }}</td>
-          <td>{{ item.serving_size_label or "-" }}</td>
-          <td>{{ item.basis or "-" }}</td>
-          <td>{{ item.source }}</td>
-          <td>{{ item.macros.energy_kcal or "-" }}</td>
-          <td>{{ item.macros.protein_g or "-" }}</td>
-          <td>{{ item.macros.carbs_g or "-" }}</td>
-          <td>{{ item.macros.fat_g or "-" }}</td>
-          <td>
-            {% if user %}
-              <form method="post" action="/log/add" class="add-log-form">
-                <input type="hidden" name="description" value="{{ item.description }}">
-                <input type="hidden" name="serving_size_label" value="{{ item.serving_size_label }}">
-                <input type="hidden" name="basis" value="{{ item.basis }}">
-                <input type="hidden" name="source" value="{{ item.source }}">
-                <input type="hidden" name="energy_kcal" value="{{ item.macros.energy_kcal }}">
-                <input type="hidden" name="protein_g" value="{{ item.macros.protein_g }}">
-                <input type="hidden" name="carbs_g" value="{{ item.macros.carbs_g }}">
-                <input type="hidden" name="fat_g" value="{{ item.macros.fat_g }}">
+      <tr>
+        <td>{{ item.description }}</td>
+        <td>{{ item.brandOwner or "-" }}</td>
+        <td>{{ item.serving_size_label or "-" }}</td>
+        <td>{{ item.basis or "-" }}</td>
+        <td>{{ item.source }}</td>
+        <td>{{ item.macros.energy_kcal or "-" }}</td>
+        <td>{{ item.macros.protein_g or "-" }}</td>
+        <td>{{ item.macros.carbs_g or "-" }}</td>
+        <td>{{ item.macros.fat_g or "-" }}</td>
+        <td>
+          {% if user %}
+          <form method="post" action="/log/add" class="add-log-form">
+            <input type="hidden" name="description" value="{{ item.description }}">
+            <input type="hidden" name="serving_size_label" value="{{ item.serving_size_label }}">
+            <input type="hidden" name="basis" value="{{ item.basis }}">
+            <input type="hidden" name="source" value="{{ item.source }}">
+            <input type="hidden" name="energy_kcal" value="{{ item.macros.energy_kcal }}">
+            <input type="hidden" name="protein_g" value="{{ item.macros.protein_g }}">
+            <input type="hidden" name="carbs_g" value="{{ item.macros.carbs_g }}">
+            <input type="hidden" name="fat_g" value="{{ item.macros.fat_g }}">
 
-                <label class="meal-label">
-                  Meal:
-                  <select name="meal_type" class="meal-select">
-                    <option value="Breakfast">Breakfast</option>
-                    <option value="Lunch">Lunch</option>
-                    <option value="Dinner" selected>Dinner</option>
-                    <option value="Snack">Snack</option>
-                  </select>
-                </label>
+            <label class="meal-label">
+              Meal:
+              <select name="meal_type" class="meal-select">
+                <option value="Breakfast">Breakfast</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Dinner" selected>Dinner</option>
+                <option value="Snack">Snack</option>
+              </select>
+            </label>
 
-                <button type="submit">Add to log</button>
-              </form>
-            {% else %}
-              <a href="/login">Login to log</a>
-            {% endif %}
-          </td>
-        </tr>
+            <button type="submit">Add to log</button>
+          </form>
+          {% else %}
+          <a href="/login">Login to log</a>
+          {% endif %}
+        </td>
+      </tr>
       {% endfor %}
-      </tbody>
-    </table>
+    </tbody>
+  </table>
   {% endif %}
 </section>
 
-<section class="card">
-    <h2>Upload meal photo </h2>
-    <form method="post" action="/upload-image" enctype="multipart/form-data">
-      <input type="file" name="image" accept="image/png,image/jpeg" required>
-      <button type="submit">Analyze Image</button>
+<section class="card action-card">
+  <h2>Log your meal</h2>
+  <div class="action-buttons">
+    <!-- Camera Button: Goes directly to camera on mobile -->
+    <form method="post" action="/upload-image" enctype="multipart/form-data" class="action-form">
+      <input type="file" name="image" accept="image/*" capture="environment" id="camera-input" hidden
+        onchange="document.getElementById('loading-overlay').style.display='flex'; this.form.submit()">
+      <button type="button" class="action-btn camera-btn" onclick="document.getElementById('camera-input').click()">
+        <div class="icon-circle">📸</div>
+        <span class="btn-text">Take Photo</span>
+      </button>
     </form>
-  
-    {% if image_results %}
-      <h3>Detected items</h3>
-  
-      {% if user %}
-        <!-- Bulk add form: adds ALL detected foods at once -->
-        <form method="post" action="/log/add-multiple">
-          <div class="bulk-add-bar">
-            <label class="meal-select-label">
-              Meal for all items:
-              <select name="meal_type" class="meal-select">
-                <option value="breakfast">Breakfast</option>
-                <option value="lunch">Lunch</option>
-                <option value="dinner" selected>Dinner</option>
-                <option value="snack">Snack</option>
-              </select>
-            </label>
-            <button type="submit" class="btn-primary">Add all to log</button>
-          </div>
-  
-          {% for row in image_results %}
-            {% set food = row.food %}
-            <div class="image-result">
-              <h4>Detected: {{ row.detected_name }}</h4>
-              <p><strong>{{ food.description }}</strong>
-                {% if food.brandOwner %} ({{ food.brandOwner }}){% endif %}
-              </p>
-              <ul>
-                <li>Serving: {{ food.serving_size_label or "-" }}</li>
-                <li>Basis: {{ food.basis or "-" }}</li>
-                <li>Source: {{ food.source }}</li>
-                <li>Energy: {{ food.macros.energy_kcal or "-" }} kcal</li>
-                <li>Protein: {{ food.macros.protein_g or "-" }} g</li>
-                <li>Carbs: {{ food.macros.carbs_g or "-" }} g</li>
-                <li>Fat: {{ food.macros.fat_g or "-" }} g</li>
-              </ul>
-  
-              <!-- Hidden fields for BULK add -->
-              <input type="hidden" name="description" value="{{ food.description }}">
-              <input type="hidden" name="serving_size_label" value="{{ food.serving_size_label }}">
-              <input type="hidden" name="basis" value="{{ food.basis }}">
-              <input type="hidden" name="source" value="{{ food.source }}">
-              <input type="hidden" name="energy_kcal" value="{{ food.macros.energy_kcal }}">
-              <input type="hidden" name="protein_g" value="{{ food.macros.protein_g }}">
-              <input type="hidden" name="carbs_g" value="{{ food.macros.carbs_g }}">
-              <input type="hidden" name="fat_g" value="{{ food.macros.fat_g }}">
-            </div>
-          {% endfor %}
-        </form>
-      {% else %}
-        <p class="hint">
-          Login to add detected foods to your log. <a href="/login">Sign in</a>.
-        </p>
-      {% endif %}
-    {% endif %}
-  </section>
-  
+
+    <!-- Gallery Button: Opens system picker -->
+    <form method="post" action="/upload-image" enctype="multipart/form-data" class="action-form">
+      <input type="file" name="image" accept="image/*" id="gallery-input" hidden
+        onchange="document.getElementById('loading-overlay').style.display='flex'; this.form.submit()">
+      <button type="button" class="action-btn gallery-btn" onclick="document.getElementById('gallery-input').click()">
+        <div class="icon-circle">🖼️</div>
+        <span class="btn-text">Upload Photo</span>
+      </button>
+    </form>
+  </div>
+  <p class="hint-text">Snap a pic or upload to analyze nutrition instantly.</p>
+</section>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" style="display: none;">
+  <div class="spinner"></div>
+  <p>Analyzing food...</p>
+</div>
+
+{% if image_results %}
+<h3>Detected items</h3>
+
+{% if user %}
+<!-- Bulk add form: adds ALL detected foods at once -->
+<form method="post" action="/log/add-multiple">
+  <div class="bulk-add-bar">
+    <label class="meal-select-label">
+      Meal for all items:
+      <select name="meal_type" class="meal-select">
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="dinner" selected>Dinner</option>
+        <option value="snack">Snack</option>
+      </select>
+    </label>
+    <button type="submit" class="btn-primary">Add all to log</button>
+  </div>
+
+  {% for row in image_results %}
+  {% set food = row.food %}
+  <div class="image-result">
+    <h4>Detected: {{ row.detected_name }}</h4>
+    <p><strong>{{ food.description }}</strong>
+      {% if food.brandOwner %} ({{ food.brandOwner }}){% endif %}
+    </p>
+    <ul>
+      <li>Serving: {{ food.serving_size_label or "-" }}</li>
+      <li>Basis: {{ food.basis or "-" }}</li>
+      <li>Source: {{ food.source }}</li>
+      <li>Energy: {{ food.macros.energy_kcal or "-" }} kcal</li>
+      <li>Protein: {{ food.macros.protein_g or "-" }} g</li>
+      <li>Carbs: {{ food.macros.carbs_g or "-" }} g</li>
+      <li>Fat: {{ food.macros.fat_g or "-" }} g</li>
+    </ul>
+
+    <!-- Hidden fields for BULK add -->
+    <input type="hidden" name="description" value="{{ food.description }}">
+    <input type="hidden" name="serving_size_label" value="{{ food.serving_size_label }}">
+    <input type="hidden" name="basis" value="{{ food.basis }}">
+    <input type="hidden" name="source" value="{{ food.source }}">
+    <input type="hidden" name="energy_kcal" value="{{ food.macros.energy_kcal }}">
+    <input type="hidden" name="protein_g" value="{{ food.macros.protein_g }}">
+    <input type="hidden" name="carbs_g" value="{{ food.macros.carbs_g }}">
+    <input type="hidden" name="fat_g" value="{{ food.macros.fat_g }}">
+  </div>
+  {% endfor %}
+</form>
+{% else %}
+<p class="hint">
+  Login to add detected foods to your log. <a href="/login">Sign in</a>.
+</p>
+{% endif %}
+{% endif %}
+</section>
+
 {% if not user %}
-  <p class="hint">
-    Want to log meals and see trends later? <a href="/register">Create an account</a>.
-  </p>
+<p class="hint">
+  Want to log meals and see trends later? <a href="/register">Create an account</a>.
+</p>
 {% endif %}
 
 {% if user %}
 <script>
   // Handle AJAX form submissions for adding food to log
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     // Single food add forms
     const addLogForms = document.querySelectorAll('.add-log-form');
     addLogForms.forEach(form => {
-      form.addEventListener('submit', async function(e) {
+      form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         const button = form.querySelector('button[type="submit"]');
         const originalText = button.textContent;
         button.disabled = true;
@@ -189,7 +209,7 @@
           });
 
           const result = await response.json();
-          
+
           if (result.success) {
             button.textContent = '✓ Added!';
             button.style.background = '#22c55e';
@@ -215,9 +235,9 @@
     // Multiple foods add form
     const bulkAddForm = document.querySelector('form[action="/log/add-multiple"]');
     if (bulkAddForm) {
-      bulkAddForm.addEventListener('submit', async function(e) {
+      bulkAddForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         const button = bulkAddForm.querySelector('button[type="submit"]');
         const originalText = button.textContent;
         button.disabled = true;
@@ -225,7 +245,7 @@
 
         const formData = new FormData(bulkAddForm);
         const mealType = formData.get('meal_type') || 'dinner';
-        
+
         // Collect all food items
         const foods = [];
         const descriptions = formData.getAll('description');
@@ -265,7 +285,7 @@
           });
 
           const result = await response.json();
-          
+
           if (result.success) {
             button.textContent = '✓ Added!';
             button.style.background = '#22c55e';

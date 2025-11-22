@@ -1122,3 +1122,125 @@ tr:nth-child(odd) td {
   font-weight: 700;
   color: #f9fafb;
 }
+
+/* === Mobile App UI Enhancements === */
+
+.action-card {
+  text-align: center;
+  background: linear-gradient(145deg, #1a1d2d, #111321);
+  border: 1px solid #2b304a;
+  padding: 1.5rem;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.action-form {
+  width: 100%;
+}
+
+.action-btn {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #23273a;
+  border: 1px solid #374151;
+  border-radius: 16px;
+  padding: 1.5rem 1rem;
+  transition: all 0.2s ease;
+  height: 100%;
+  cursor: pointer;
+}
+
+.action-btn:active {
+  transform: scale(0.96);
+  background: #2d324a;
+}
+
+.camera-btn .icon-circle {
+  background: rgba(129, 140, 248, 0.2);
+  color: #818cf8;
+}
+
+.gallery-btn .icon-circle {
+  background: rgba(52, 211, 153, 0.2);
+  color: #34d399;
+}
+
+.icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.btn-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+.hint-text {
+  margin-top: 1.25rem;
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+/* Loading Overlay */
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #818cf8;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile Search Bar Polish */
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-form input {
+  border-radius: 999px;
+  padding-left: 1.25rem;
+  background: #1f2937;
+  border-color: transparent;
+}
+
+.search-form button {
+  padding: 0.5rem 1.25rem;
+  white-space: nowrap;
+}
