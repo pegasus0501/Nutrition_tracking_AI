@@ -130,30 +130,45 @@
 
   {% for row in image_results %}
   {% set food = row.food %}
-  <div class="image-result">
-    <h4>Detected: {{ row.detected_name }}</h4>
-    <p><strong>{{ food.description }}</strong>
-      {% if food.brandOwner %} ({{ food.brandOwner }}){% endif %}
-    </p>
-    <ul>
-      <li>Serving: {{ food.serving_size_label or "-" }}</li>
-      <li>Basis: {{ food.basis or "-" }}</li>
-      <li>Source: {{ food.source }}</li>
-      <li>Energy: {{ food.macros.energy_kcal or "-" }} kcal</li>
-      <li>Protein: {{ food.macros.protein_g or "-" }} g</li>
-      <li>Carbs: {{ food.macros.carbs_g or "-" }} g</li>
-      <li>Fat: {{ food.macros.fat_g or "-" }} g</li>
-    </ul>
+  <div class="image-result"
+    style="padding: 15px; border: 1px solid #333; margin-bottom: 15px; border-radius: 12px; background: #1a1a1a;">
+    <h4
+      style="margin-top: 0; margin-bottom: 10px; color: #aaa; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px;">
+      Detected: {{ row.detected_name }}</h4>
 
-    <!-- Hidden fields for BULK add -->
-    <input type="hidden" name="description" value="{{ food.description }}">
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 0.8em; color: #888; margin-bottom: 4px;">Description</label>
+      <input type="text" name="description" value="{{ food.description }}"
+        style="width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; font-size: 1em;">
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
+      <div>
+        <label style="display: block; font-size: 0.8em; color: #888; margin-bottom: 4px;">Kcal</label>
+        <input type="number" name="energy_kcal" value="{{ food.macros.energy_kcal }}" step="0.1"
+          style="width: 100%; padding: 8px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; text-align: center;">
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.8em; color: #888; margin-bottom: 4px;">Prot (g)</label>
+        <input type="number" name="protein_g" value="{{ food.macros.protein_g }}" step="0.1"
+          style="width: 100%; padding: 8px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; text-align: center;">
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.8em; color: #888; margin-bottom: 4px;">Carbs (g)</label>
+        <input type="number" name="carbs_g" value="{{ food.macros.carbs_g }}" step="0.1"
+          style="width: 100%; padding: 8px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; text-align: center;">
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.8em; color: #888; margin-bottom: 4px;">Fat (g)</label>
+        <input type="number" name="fat_g" value="{{ food.macros.fat_g }}" step="0.1"
+          style="width: 100%; padding: 8px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; text-align: center;">
+      </div>
+    </div>
+
+    <!-- Hidden fields for non-editable metadata -->
     <input type="hidden" name="serving_size_label" value="{{ food.serving_size_label }}">
     <input type="hidden" name="basis" value="{{ food.basis }}">
     <input type="hidden" name="source" value="{{ food.source }}">
-    <input type="hidden" name="energy_kcal" value="{{ food.macros.energy_kcal }}">
-    <input type="hidden" name="protein_g" value="{{ food.macros.protein_g }}">
-    <input type="hidden" name="carbs_g" value="{{ food.macros.carbs_g }}">
-    <input type="hidden" name="fat_g" value="{{ food.macros.fat_g }}">
   </div>
   {% endfor %}
 </form>
